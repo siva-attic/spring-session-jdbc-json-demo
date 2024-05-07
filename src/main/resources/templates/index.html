@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Spring Session</title>
+</head>
+
+<body>
+<main>
+    <div id="app" class="container">
+        <p>Counter: <span th:text="${counter}">0</span></p>
+        <form method="post" action="/increment">
+            <button type="submit">Increment</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>
