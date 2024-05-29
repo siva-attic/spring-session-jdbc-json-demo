@@ -12,16 +12,15 @@ import org.springframework.core.serializer.Deserializer;
 import org.springframework.core.serializer.Serializer;
 import org.springframework.core.serializer.support.DeserializingConverter;
 import org.springframework.core.serializer.support.SerializingConverter;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
-import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 @Configuration(proxyBeanMethods = false)
-//@EnableJdbcHttpSession
 public class SessionConfig implements BeanClassLoaderAware {
 
 	private static final String CREATE_SESSION_ATTRIBUTE_QUERY = """
@@ -29,20 +28,31 @@ public class SessionConfig implements BeanClassLoaderAware {
 			VALUES (?, ?, encode(?, 'escape')::jsonb)
 			""";
 
+	private static final String UPDATE_SESSION_ATTRIBUTE_QUERY = """
+		UPDATE %TABLE_NAME%_ATTRIBUTES
+		SET ATTRIBUTE_BYTES = encode(?, 'escape')::jsonb
+		WHERE SESSION_PRIMARY_ID = ?
+		AND ATTRIBUTE_NAME = ?
+		""";
+
 	private ClassLoader classLoader;
 
 	@Bean
-    SessionRepositoryCustomizer<JdbcIndexedSessionRepository> customizer() {
-		return (sessionRepository) -> sessionRepository.setCreateSessionAttributeQuery(CREATE_SESSION_ATTRIBUTE_QUERY);
+	SessionRepositoryCustomizer<JdbcIndexedSessionRepository> customizer() {
+		return (sessionRepository) -> {
+			sessionRepository.setCreateSessionAttributeQuery(CREATE_SESSION_ATTRIBUTE_QUERY);
+			sessionRepository.setUpdateSessionAttributeQuery(UPDATE_SESSION_ATTRIBUTE_QUERY);
+		};
 	}
 
 	@Bean("springSessionConversionService")
 	public GenericConversionService springSessionConversionService(ObjectMapper objectMapper) {
 		ObjectMapper copy = objectMapper.copy();
-		/*copy.enable(JsonGenerator.Feature.IGNORE_UNKNOWN);
+		copy.registerModules(SecurityJackson2Modules.getModules(this.classLoader));
+		copy.enable(JsonGenerator.Feature.IGNORE_UNKNOWN);
 		copy.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 		copy.activateDefaultTyping(copy.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-		*/
+
 		GenericConversionService converter = new GenericConversionService();
 		converter.addConverter(Object.class, byte[].class, new SerializingConverter(new JsonSerializer(copy)));
 		converter.addConverter(byte[].class, Object.class, new DeserializingConverter(new JsonDeserializer(copy)));
