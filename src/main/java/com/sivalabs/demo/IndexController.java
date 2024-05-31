@@ -12,13 +12,12 @@ class IndexController {
 
     @GetMapping("/")
     String index(Model model,
-                 Authentication authentication,
-                 HttpSession session) {
+                 Authentication authentication) {
         Object principal = authentication.getPrincipal();
         if(principal instanceof SecurityUser securityUser) {
             model.addAttribute("username", securityUser.getUsername());
         }
-        if(principal instanceof User user) {
+        else if(principal instanceof User user) {
             model.addAttribute("username", "UNEXPECTED");
         }
         return "index";

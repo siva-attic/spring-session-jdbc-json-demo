@@ -49,6 +49,7 @@ public class SessionConfig implements BeanClassLoaderAware {
 	public GenericConversionService springSessionConversionService(ObjectMapper objectMapper) {
 		ObjectMapper copy = objectMapper.copy();
 		copy.registerModules(SecurityJackson2Modules.getModules(this.classLoader));
+		copy.addMixIn(SecurityUser.class, SecurityUserMixin.class);
 		copy.enable(JsonGenerator.Feature.IGNORE_UNKNOWN);
 		copy.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 		copy.activateDefaultTyping(copy.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
